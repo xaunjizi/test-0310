@@ -1,0 +1,89 @@
+C51 COMPILER V9.52.0.0   EXT                                                               11/13/2024 09:06:20 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE EXT
+OBJECT MODULE PLACED IN .\obj\EXT.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE src\EXT.c LARGE OMF2 BROWSE INCDIR(.\src) DEBUG PRINT(.\lst\EXT.lst) TABS(2
+                    -) OBJECT(.\obj\EXT.obj)
+
+line level    source
+
+   1          #include "CBM7216.h"
+   2          
+   3          /* 
+   4          功能 ：外部中断初始化
+   5          参数：
+   6            sel：触发方式
+   7                000-高电平、001-低电平、101-上升沿、110-下降沿、111-双边沿、其他-不触发
+   8                外部中断5特殊，000、001无效
+   9              n：选择外部中断：0-5
+  10          */
+  11          void EXTInit(uint8 sel ,uint8 n)
+  12          {
+  13   1          IFLTCNTR =   0x0f;   //设置滤波时间
+  14   1      //  uint8  Trg = 0x03,EXTn = 0;
+  15   1        switch(n) 
+  16   1        {
+  17   2           case 0:
+  18   2           {
+  19   3              XINT01TRGR =  sel << 0 ;   //触发方式
+  20   3              IRQ0ER_XINT0 = 1 << 0;        //使能外部中断0
+  21   3              EX0 = 1;               //使能内核中断0
+  22   3            }  break ;
+  23   2           case 1:
+  24   2           {
+  25   3              XINT01TRGR = sel << 4 ;   //触发方式为
+  26   3              IRQ1ER_XINT1 = 1 << 0;        //使能外部中断1
+  27   3              EX1 = 1;               //使能内核中断0
+  28   3            }      break ;
+  29   2          case 2:
+  30   2           {
+  31   3              XINT23TRGR = sel<< 0 ;   //触发方式
+  32   3              IRQ2ER_XINT2 = 1 << 0;        //使能外部中断2
+  33   3              EX2 = 1;               //使能内核中断0
+  34   3            }          break ;
+  35   2          case 3:
+  36   2           {
+  37   3              XINT23TRGR = sel << 4 ;   //触发方式
+  38   3              IRQ3ER_XINT3 = 1 << 0;        //使能外部中断3
+  39   3              EX3 = 1;               //使能内核中断0
+  40   3            }            break ;
+  41   2          case 4:
+  42   2           {
+  43   3              XINT45TRGR = sel << 0 ;   //触发方式
+  44   3              IRQ4ER_XINT4 = 1 << 0;        //使能外部中断4
+  45   3              EX4 = 1;               //使能内核中断0
+  46   3            }             break ;
+  47   2          case 5:
+  48   2           {
+  49   3              XINT45TRGR = sel << 4 ;   //触发方式
+  50   3              IRQ5ER_XINT5 = 1 << 0;        //使能外部中断5
+  51   3              EX5 = 1;               //使能内核中断0
+  52   3            }      break ;
+  53   2            default :break;
+  54   2        }
+C51 COMPILER V9.52.0.0   EXT                                                               11/13/2024 09:06:20 PAGE 2   
+
+  55   1          EA = 1;           //开内核总中断（如果频繁调用次函数，总中断开关可以保持开启，移除到函数外）
+  56   1      }
+  57          
+  58          
+  59          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    126    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

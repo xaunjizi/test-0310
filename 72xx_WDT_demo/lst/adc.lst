@@ -1,0 +1,214 @@
+C51 COMPILER V9.52.0.0   ADC                                                               11/12/2024 17:42:57 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\obj\adc.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE src\adc.c LARGE OMF2 BROWSE INCDIR(.\src) DEBUG PRINT(.\lst\adc.lst) TABS(2
+                    -) OBJECT(.\obj\adc.obj)
+
+line level    source
+
+   1          #include "CBM7216.h"
+   2          #include "stdio.h"
+   3          #include "uart1.h"
+   4          
+   5          /****************************************************************       
+   6          founction£ºADC³õÊ¼»¯
+   7          parameter£º
+   8              clkdiv £º·ÖÆµÏµÊýADC ²ÉÑùÊ±ÖÓ= fSYSCLK /(2*(ADCDIVCR+1)) £»µ± fSYSCLK=48M Ê±,ADCDIVCR µÄÖµ±ØÐë>=17¡£  £¨
+             -ADC×î´ó1.4M£©
+   9              sel  £ºbit6-4 000-110 = 1-64´Î²ÉÑùÂË²¨
+  10          ****************************************************************/
+  11          void adcInit(uint8 div,uint8 ctrl) 
+  12          {
+  13   1          ADCDIVCR = div;//ÅäÖÃADCµÄ²ÉÑùÊ±ÖÓÆµÂÊ
+  14   1          ADCSR = 0 << 0;//ÇåADCÖÐ¶Ï  
+  15   1          ADCCR =  ctrl|0x20;//ÅäÖÃADCÖÐ¶Ï¡¢²Î¿¼µçÑ¹¡¢²Ù×÷·½Ê½¡¢²ÉÑùÊ±¼ä
+  16   1          LDOCR1 |= 0x40;//³£¹æÄ£Ê½ÏÂ²ÉÑùÍ¨µÀÎªÄÚ²¿vref1vÊ±»òÎªÓ²¼þÄ£Ê½Ê±±ØÐëÊ¹ÄÜ
+  17   1          IRQ4ER_ADCINT = 1 << 2;//Ê¹ÄÜADCÏà¹ØÖÐ¶Ï
+  18   1          EX4 = 1;
+  19   1          EA = 1;
+  20   1      }
+  21          
+  22          ///****************************************************************        
+  23          //founction£ºADCÍ¨µÀÑ¡Ôñ²É¼¯
+  24          //parameter£º
+  25          //    chlsel £º£¨Í¨µÀÑ¡Ôñ£© bit4-0 0000-0111 = AN0-AN25¡¢11010=VREF£¨ÄÚ²¿1v£©¡¢11011 = ÄÚ²¿1/4*VDD
+  26          //    flitnum£º£¨ÂË²¨¼¶Êý£©bit7-5 000-110 = 1-64´Î²ÉÑùÂË²¨
+  27          //****************************************************************/
+  28          uint16 adcSampStart(uint8 flitnum_chlnum) 
+  29          {
+  30   1        uint8 i=20; 
+  31   1        ADCSELR =flitnum_chlnum;//ÉèÖÃ²ÉÑùÍ¨µÀ
+  32   1        while(i--);//Ñ¡Ôñ²ÉÑùÍ¨µÀºóÑÓÊ±ÔÙ²ÉÑù   ÑÓÊ±>=5us
+  33   1        ADCCR_TRIG = 1 << 7;//´¥·¢Ò»´ÎADC²ÉÑù
+  34   1        while(0x00 == ADCSR_SAMPEND);//µÈ´ý²ÉÑùÍê³É
+  35   1        ADCSR_SAMPEND = 0 << 0;
+  36   1        return  (ADCDRH << 8) | ADCDRL;//·µ»Ø²ÉÑùADÖµ
+  37   1      }
+  38          
+  39          
+  40          
+  41          /****************************************************************   
+  42          founction£ºADC²ÉÑùÖµ£¨Ð¡ÊýÐÎÊ½£©
+  43          parameter£º
+  44              mode £º¹¤×÷Ä£Ê½  0-³£¹æÄ£Ê½¡¢1-Ó²¼þÄ£Ê½
+  45              chlsel £º£¨Í¨µÀÑ¡Ôñ£© bit3-0 0000-0111 = AN0-AN7¡¢1000=VREF£¨ÄÚ²¿1v£©¡¢1001-1111 = ÄÚ²¿1/4*VDD
+  46              flitnum£º£¨ÂË²¨¼¶Êý£©bit6-4 000-110 = 1-64´Î²ÉÑùÂË²¨
+  47          
+  48          ****************************************************************/
+  49          float ADCSampValue(uint8 flitnum_chlnum )
+  50          {
+  51   1            uint16 ADCSamp = 0;            //ADC²ÉÑùÖµÎªÕûÐÍ
+  52   1            float ADCValue = 0;            //×ª»¯ÎªÐ¡ÊýÐÎÊ½£¬¸¡µãÐÍ
+  53   1            if((ADCCR & 0x40) == 0)
+C51 COMPILER V9.52.0.0   ADC                                                               11/12/2024 17:42:57 PAGE 2   
+
+  54   1            {
+  55   2              ADCSamp =  adcSampStart(flitnum_chlnum);
+  56   2              ADCValue = 5.0*(ADCSamp & 0xfff)/4096 ;               //AD ÊäÈëµçÑ¹ Vin=VDD*²ÉÑùÊä³öÖµ/1024 v
+  57   2            }
+  58   1            else
+  59   1            {
+  60   2              ADCSamp=  adcSampStart(flitnum_chlnum);  
+  61   2              ADCValue = (ADCSamp >>12)+((ADCSamp & 0x0fff )/4096);      //AD ÊäÈëµçÑ¹ Vin =(²ÉÑùÊä³öÖµ>>10) + (²ÉÑù
+             -Êä³öÖµ&0x3FF)/1024 v
+  62   2      
+  63   2            }
+  64   1              return ADCValue;        
+  65   1      }
+  66          
+  67          
+  68          
+  69          /****************************************************************   
+  70          function£º³õÊ¼»¯ADCÒý½Å
+  71          parameter£ºvoid 
+  72          ****************************************************************/
+  73          void ADCPortInit(void)
+  74          {
+  75   1          P06IOCFG = 0x09;       //ÉèÖÃÎªADCÍ¨µÀ
+  76   1          P07IOCFG = 0x09; 
+  77   1          P10IOCFG = 0x09; 
+  78   1          P11IOCFG = 0x09; 
+  79   1          P12IOCFG = 0x09; 
+  80   1          P13IOCFG = 0x09; 
+  81   1          P14IOCFG = 0x09; 
+  82   1          P15IOCFG = 0x09; 
+  83   1        
+  84   1        
+  85   1          P0OE_6 = 0x01;          //ÊäÈë·½Ïò
+  86   1          P0OE_7 = 0x09;
+  87   1          P1OE_0 = 0x09;
+  88   1          P1OE_1 = 0x09;
+  89   1          P1OE_2 = 0x09;
+  90   1          P1OE_3 = 0x09;
+  91   1          P1OE_4 = 0x09;
+  92   1          P1OE_5 = 0x09;    
+  93   1          
+  94   1          P0PU_6 = 0x00;         //ÉÏÀ­¹Ø±Õ
+  95   1          P0PU_7 = 0x00;
+  96   1          P1PU_0 = 0x00;
+  97   1          P1PU_1 = 0x00;
+  98   1          P1PU_2 = 0x00;
+  99   1          P1PU_3 = 0x00;
+ 100   1          P1PU_4 = 0x00;
+ 101   1          P1PU_5 = 0x00;
+ 102   1      }
+ 103          
+ 104          
+ 105          ///*********************************************************************************** 
+ 106          //Function   : bit adcLdo0Trimming(void)
+ 107          //Description: ¶ÔADC LDO0½øÐÐÎÂÆ¯Ð£×¼-Î¢µ÷£¨ÏÈ½øÐÐ´Öµ÷È»ºóÔÙÎ¢µ÷£©£¬½¨ÒéÎÂ¶È±ä»¯½Ï´óÊ±ÔÚ1~5·ÖÖÓ½øÐÐÐ£×¼Ò»´
+             -Î
+ 108          //Input      : NO         
+ 109          //Output     : No                   
+ 110          //Return     : No
+ 111          //************************************************************************************/
+ 112          //bit adcLdo0Trimming(void)
+ 113          //{
+C51 COMPILER V9.52.0.0   ADC                                                               11/12/2024 17:42:57 PAGE 3   
+
+ 114          //      uint8 i=0,j; 
+ 115          //     bit ret=0;
+ 116          //      LDOCR0 = 1 << 5;   //Ê¹ÄÜÎÂÆ¯´Öµ÷
+ 117          //      
+ 118          //      while(i<=32)
+ 119          //      {
+ 120          //        LDOCR0 = LDOCR0 | i;      //ÐÞ¸ÄTRIMOVALÖµ´Ó00000-11111
+ 121          //        for(j=0;j<100;j++);       //ÑÓÊ±Ô¼10us
+ 122          //        if(0x80 == (LDOCR0&0x80))  //
+ 123          //        {
+ 124          //            ret = 1;//±íÊ¾´Öµ÷³É¹¦
+ 125          //          break;
+ 126          //        }
+ 127          //        i++;
+ 128          //         LDOCR0 &= 0xDF;//¹Ø±ÕLDO0 Trimming  
+ 129          //         return ret;
+ 130          //      }
+ 131          //}
+ 132          
+ 133          
+ 134          ///*********************************************************************************** 
+ 135          //Function   : bit adcLdo1Trimming(void)
+ 136          //Description: ¶ÔADC LDO1½øÐÐÎÂÆ¯Ð£×¼-Î¢µ÷£¨ÏÈ½øÐÐ´Öµ÷È»ºóÔÙÎ¢µ÷£©£¬½¨ÒéÎÂ¶È±ä»¯½Ï´óÊ±ÔÚ1~5·ÖÖÓ½øÐÐÐ£×¼Ò»´
+             -Î
+ 137          //Input      : NO         
+ 138          //Output     : No                   
+ 139          //Return     : No
+ 140          //************************************************************************************/
+ 141          //bit adcLdo1Trimming(void)
+ 142          //{
+ 143          //  uint8 i = 0,j;
+ 144          //  bit ret=0;  
+ 145          //    LDOCR1 |= 1 << 5;//Ê¹ÄÜLDO0 Trimming  
+ 146          //    do 
+ 147          //    { 
+ 148          //        LDOCR1 &= 0xE0;
+ 149          //    LDOCR1 |= i;
+ 150          //        for(j=0;j<100;j++);//µÈ´ý10us
+ 151          //    if(0x80 == (LDOCR1&0x80))//ÅÐ¶ÏÊä³öÊÇ·ñÎª1
+ 152          //    { 
+ 153          //      ret = 1;//±íÊ¾Î¢µ÷³É¹¦
+ 154          //      break;
+ 155          //    }
+ 156          //      i++;  
+ 157          //    }
+ 158          //  while(32 > i);
+ 159          //    LDOCR1 &= 0xDF;//¹Ø±ÕLDO0 Trimming  
+ 160          //  return ret;
+ 161          //}
+ 162          
+ 163          ///*********************************************************************************** 
+ 164          //Function   : bit adcLdoTrimming(void)
+ 165          //Description: ¶ÔADC LDO½øÐÐÎÂÆ¯Ð£×¼£¨ÏÈ½øÐÐ´Öµ÷È»ºóÔÙÎ¢µ÷£©£¬½¨ÒéÎÂ¶È±ä»¯½Ï´óÊ±ÔÚ1~5·ÖÖÓ½øÐÐÐ£×¼Ò»´Î
+ 166          //Input      : NO         
+ 167          //Output     : No                   
+ 168          //Return     : No
+ 169          //************************************************************************************/
+ 170          //bit adcLdoTrimming(void)
+ 171          //{
+ 172          //  bit ret=0;  
+ 173          //  if(adcLdo0Trimming())//ÏÈ´Öµ÷
+ 174          //    ret = adcLdo1Trimming() ;//ÔÙÎ¢µ÷
+C51 COMPILER V9.52.0.0   ADC                                                               11/12/2024 17:42:57 PAGE 4   
+
+ 175          //  return ret;
+ 176          //}
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    292    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       7
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

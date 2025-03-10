@@ -1,0 +1,185 @@
+C51 COMPILER V9.52.0.0   TIMER1                                                            11/13/2024 09:06:20 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE TIMER1
+OBJECT MODULE PLACED IN .\obj\timer1.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE src\timer1.c LARGE OMF2 BROWSE INCDIR(.\src) DEBUG PRINT(.\lst\timer1.lst) 
+                    -TABS(2) OBJECT(.\obj\timer1.obj)
+
+line level    source
+
+   1          #include "CBM7216.h"
+   2          
+   3          
+   4          
+   5          /*  
+   6          function £º¶¨Ê±Æ÷1³õÊ¼»¯
+   7          parameter £º
+   8            cmp0 £ºtimer0¶¨Ê±ÖÜÆÚ  0x00-0xff
+   9            clksel£ºÊ±ÖÓÑ¡Ôñ  0-16M  £¬1-800k
+  10            clkdiv£º·ÖÆµÏµÊý  bit3-0 0000-0111 = 2-256·ÖÆµ£¬1000=1·ÖÆµ  ¡¢
+  11                1001-ÉÏÉýÑØ ¡¢1010-ÏÂ½µÑØ¡¢1011-Ë«±ßÑØ¡¢1100~1111-1·ÖÆµ
+  12          */
+  13          void Timer1Init(uint8 cmp,uint8 clksel, uint8 clkdiv)
+  14          {
+  15   1         uint8 j=200;                   
+  16   1          MDLCKCR_TIMEREN = 1 << 2;                                            //Ê¹ÄÜtimer1Ä£¿é
+  17   1          T1CR = 0;                                                            //bit0  ,¹Ø±Õtimer1½øÐÐÅäÖÃ
+  18   1          T1SR = 0x00;                                                         //Çå±êÖ¾
+  19   1          T1CMP = cmp;
+  20   1          T1CKCR = (1 << 5) | (clksel << 4) | ((clkdiv &0x0f ) << 0);          //´ò¿ª¼ÆÊýÊ±ÖÓ¡¢Ê±ÖÓËÙÂÊÑ¡Ôñ£¨M/K£©
+             -¡¢·ÖÆµÏµÊý
+  21   1          T1CR = (clksel << 7) | (1 << 6) | (2 << 4) | (1 << 3) | (0 << 1) ;   //ÅäÖÃtimer0¶Á¼ÆÊýÆ÷Ä£Ê½¡¢Æ¥Åä·­×ª¡
+             -¢¶¨Ê±Æ÷Ä£Ê½³õÊ¼µÍµçÆ½£¨bit5-4£©¡¢ÖÐ¶ÏÊ¹ÄÜ¡¢¶¨Ê±Æ÷Ä£Ê½
+  22   1          IRQ3ER_TCM1INT = 0x02;                                               //Ê¹ÄÜÍâÉèÄ£¿éÖÐ¶Ï
+  23   1          EX3 = 1   ;                                                          //ÄÚºËÖÐ¶Ï¿ª
+  24   1          EA = 1;                                                              //×ÜÖÐ¶Ï¿ª
+  25   1          while(j--){;}                                                        //µÈ´ý3*tick
+  26   1          T1CR_TEN = 1 << 0;                                                   //timer1Ê¹ÄÜÆô¶¯
+  27   1      }
+  28          
+  29          
+  30          /*  
+  31          function £ºÉè¶¨¶¨Ê±ÖÜÆÚ
+  32          parameter £º
+  33            cmp0 £ºtimer1¶¨Ê±ÖÜÆÚ  0x00-0xff
+  34            
+  35          */
+  36          void Timer1Set(uint8 cmp0)
+  37          {
+  38   1          T1CMP = cmp0;
+  39   1      }
+  40          
+  41          
+  42          /*  
+  43          function £º¶¨Ê±Æ÷1PWM³õÊ¼»¯£¬
+  44                    ÖÜÆÚ¹Ì¶¨=£¨0xff + 1£©
+  45                    Õ¼¿Õ±È£º³õÊ¼¸ßµçÆ½=T1CMP/256  ¡¢ ³õÊ¼µÍµçÆ½=£¨0x100 - T1CMP£© / 256
+  46          parameter £º
+  47            cmp £ºtimer1¶¨Ê±ÖÜÆÚ  0x00-0xff
+  48            clksel£ºÊ±ÖÓÑ¡Ôñ  0-16M  £¬1-800k
+  49            clkdiv£º·ÖÆµÏµÊý  bit3-0 0000-0111 = 2-256·ÖÆµ£¬1000=1·ÖÆµ  ¡¢
+  50                    1001-ÉÏÉýÑØ ¡¢1010-ÏÂ½µÑØ¡¢1011-Ë«±ßÑØ¡¢1100~1111-1·ÖÆµ
+  51          */
+  52          void Timer1PWMInit(uint8 cmp,uint8 clksel, uint8 clkdiv)
+C51 COMPILER V9.52.0.0   TIMER1                                                            11/13/2024 09:06:20 PAGE 2   
+
+  53          {
+  54   1          uint8 j=200;
+  55   1          MDLCKCR_TIMEREN = 1 << 2;                                            //Ê¹ÄÜtimer1Ä£¿é
+  56   1          T1CR_TEN = 0;                                                        //bit0  ,¹Ø±Õtimer1½øÐÐÅäÖÃ
+  57   1          T1SR = 0x00;                                                         //Çå±êÖ¾
+  58   1          T1CMP = cmp;                                                         //×°ÔØ¼ÆÊýÖµ
+  59   1          T1CKCR = (1 << 5) | (clksel << 4) | ((clkdiv &0x0f ) << 0);          //´ò¿ª¼ÆÊýÊ±ÖÓ¡¢Ê±ÖÓËÙÂÊÑ¡Ôñ£¨M/K£©
+             -¡¢·ÖÆµÏµÊý 
+  60   1          T1CR = (clksel << 7) | (1 << 6)  | (1 << 3) |(0 << 2) | (1 << 1) ;   //ÅäÖÃtimer0¶Á¼ÆÊýÆ÷Ä£Ê½¡¢Æ¥Åä·­×ª
+             -¡¢PWM³õÊ¼µÍµçÆ½£¨bit5-4£©¡¢ÖÐ¶ÏÊ¹ÄÜ¡¢PWMÄ£Ê½
+  61   1          IRQ3ER_TCM1INT = 0x02;                                               //Ê¹ÄÜÍâÉèÄ£¿éÖÐ¶Ï
+  62   1          EX3 = 1   ;                                                          //ÄÚºË
+  63   1          EA = 1;                                                              //×Ü
+  64   1          while(j--){;}                                                        //µÈ´ý3*tick
+  65   1          T1CR_TEN = 1 << 0;                                                   //timer1Ê¹ÄÜÆô¶¯
+  66   1      }                     
+  67          
+  68          
+  69          /*  
+  70          function £ºÉè¶¨PWMÕ¼¿Õ±È
+  71          parameter £º
+  72            cmp £¨ÉèÖÃPWMÕ¼¿Õ±È£©£º   ³õÊ¼¸ßµçÆ½=T1CMP/256  ¡¢ ³õÊ¼µÍµçÆ½=£¨0x100 - T1CMP£© / 256
+  73            
+  74          */
+  75          void Timer1PWMSet(uint8 cmp)
+  76          {
+  77   1          T1CMP = cmp;         
+  78   1      }
+  79          
+  80          
+  81          
+  82          /*  
+  83          function £º¶¨Ê±Æ÷Íâ²¿ÊÂ¼þ¼ÆÊýÊ¼»¯£¬
+  84          parameter £º
+  85            cmp £ºtimer1¶¨Ê±ÖÜÆÚ  0x00-0xff
+  86            clksel£ºÊ±ÖÓÑ¡Ôñ  0-16M  £¬1-800k
+  87            clkdiv£º·ÖÆµÏµÊý  bit3-0 0000-0111 = 2-256·ÖÆµ£¬1000=1·ÖÆµ  ¡¢
+  88                1001-ÉÏÉýÑØ ¡¢1010-ÏÂ½µÑØ¡¢1011-Ë«±ßÑØ¡¢1100~1111-1·ÖÆµ
+  89          */
+  90          void Timer1CountInit(uint8 cmp,uint8 clksel, uint8 clkdiv)
+  91          {
+  92   1         uint8 j=200;
+  93   1          MDLCKCR_TIMEREN = 1 << 2;                                            //Ê¹ÄÜtimer1Ä£¿é
+  94   1          T1CR_TEN = 0;                                                        //bit0  ,¹Ø±Õtimer1½øÐÐÅäÖÃ
+  95   1          T1SR = 0x00;                                                         //Çå±êÖ¾
+  96   1          T1CMP = cmp;                                                         //×°ÔØ¼ÆÊýÖµ
+  97   1          T1CKCR = (1 << 5) | (clksel << 4) | ((clkdiv &0x0f ) << 0);          //¿ªÆô¼ÆÊýÊ±ÖÓ¡¢Ê±ÖÓËÙÂÊÑ¡Ôñ¡¢·ÖÆµÏ
+             -µÊý
+  98   1          T1CR = (clksel << 7) | (1 << 6)  | (1 << 3) |(0 << 2) | (0 << 1) ;   //ÅäÖÃtimer0¶Á¼ÆÊýÆ÷Ä£Ê½¡¢Æ¥Åä·­×ª
+             -£©¡¢³õÊ¼µÍµçÆ½£¨bit5-4£©¡¢ÖÐ¶ÏÊ¹ÄÜ¡¢¶¨Ê±Æ÷Ä£Ê½
+  99   1          IRQ3ER_TCM1INT = 0x02;                                               //Ê¹ÄÜÍâÉèÄ£¿éÖÐ¶Ï
+ 100   1          EX3 = 1   ;                                                          //ÄÚºË
+ 101   1          EA = 1;                                                              //×Ü
+ 102   1          while(j--){;}                                                        //µÈ´ý3*tick
+ 103   1          T1CR_TEN = 1 << 0;                                                   //timer1Ê¹ÄÜÆô¶¯
+ 104   1      }
+ 105          
+ 106          
+ 107          /*  
+ 108          function £ºtimer1¶¨Ê±ÖÜÆÚ  
+ 109          parameter £º
+ 110            cmp £º  0x00-0xff
+C51 COMPILER V9.52.0.0   TIMER1                                                            11/13/2024 09:06:20 PAGE 3   
+
+ 111            
+ 112          */
+ 113          void Timer1CountSet(uint8 cmp)
+ 114          {
+ 115   1          T1CMP = cmp;
+ 116   1      }
+ 117          
+ 118          
+ 119          /*  
+ 120          function £º¶ÁÈ¡timer1µ±Ç°¼ÆÊýÖµ
+ 121          parameter £º
+ 122          
+ 123          */
+ 124          uint8 readTimer1Counter(void)
+ 125          {
+ 126   1        idata volatile uint8 Tcnt0 ,Tcnt1 ,Tcnt2;
+ 127   1        idata uint8 i = 3;
+ 128   1        while(i--)           
+ 129   1        {
+ 130   2      
+ 131   2          Tcnt0 = T1CNT;
+ 132   2          Tcnt1 = T1CNT;
+ 133   2          Tcnt2 = T1CNT;
+ 134   2          if((Tcnt0==Tcnt1) || (Tcnt0==Tcnt2))  //ÅÐ¶ÏÈç¹ûÁ½¸öÖµÏàµÈÔò¼ÆÊýÕýÈ·
+ 135   2          {
+ 136   3            return Tcnt0;
+ 137   3          }
+ 138   2          else if(Tcnt1==Tcnt2)
+ 139   2          {
+ 140   3            return Tcnt1;
+ 141   3          }
+ 142   2        }
+ 143   1        return 0;
+ 144   1        
+ 145   1      //  return T1CNT;
+ 146   1      }
+ 147          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    298    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----       4
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

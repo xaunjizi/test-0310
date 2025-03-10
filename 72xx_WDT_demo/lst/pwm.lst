@@ -1,0 +1,492 @@
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE PWM
+OBJECT MODULE PLACED IN .\obj\pwm.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE src\pwm.c LARGE OMF2 BROWSE INCDIR(.\src) DEBUG PRINT(.\lst\pwm.lst) TABS(2
+                    -) OBJECT(.\obj\pwm.obj)
+
+line level    source
+
+   1          /************************************************************************************************ 
+   2            Company: Shenzhen Chipsbank Technologies Co., Ltd
+   3            FileName: pwm.c  
+   4            Author: Joe.huang        
+   5            Version : V1.0      
+   6            Date: 20191022
+   7            Description: pwmÄ£¿éº¯Êý
+   8          
+   9            Function List: 
+  10                  void pwm1Init(uint8 div,uint16 pwml,uint16 pwmh);
+  11                  void pwm1Set(uint16 pwml,uint16 pwmh);
+  12                  void pwm1En(void);
+  13                  void pwm1Dis(void);
+  14                  void pwm2Init(uint8 div,uint8 pwml,uint8 pwmh);
+  15                  void pwm2Set(uint8 pwml,uint8 pwmh);
+  16                  void pwm2En(void);
+  17                  void pwm2Dis(void);
+  18                  void pwm3Init(uint8 div,uint16 pwml,uint16 pwmh);
+  19                  void pwm3Set(uint16 pwml,uint16 pwmh);
+  20                  void pwm3En(void);
+  21                  void pwm3Dis(void);
+  22                  void pwm4Init(uint8 div,uint8 pwml,uint8 pwmh);
+  23                  void pwm4Set(uint8 pwml,uint8 pwmh);
+  24                  void pwm4En(void);
+  25                  void pwm4Dis(void);
+  26                  void pwm5Init(uint8 div,uint16 pwml,uint16 pwmh);
+  27                  void pwm5Set(uint16 pwml,uint16 pwmh);
+  28                  void pwm5En(void);
+  29                  void pwm5Dis(void);
+  30          
+  31            History: //ÀúÊ·ÐÞ¸Ä¼ÇÂ¼   
+  32            <author>    <time>      <Re_version >     <desc>  
+  33            Joe.huang   20191022    V1.0          ³õ°æ
+  34            
+  35          *************************************************************************************************/
+  36          #include "CBM7216.h"
+  37          
+  38          
+  39          
+  40          /*      
+  41          function  £ºPWM³õÊ¼»¯
+  42          parameter £º
+  43              clkdiv(·ÖÆµÏµÊý): bit2-0  000-111 = 2-256·ÖÆµ
+  44              idle0 £º ³õÊ¼µçÆ½Ê±¼ä
+  45              idle1 £º ·´³õÊ¼µçÆ½Ê±¼ä
+  46              ¼ÙÉè256·ÖÆµ£¬idel0=60000£»
+  47              pwmµçÆ½³ÖÐøÊ±¼ä = (div/16M)*idle0=(256/16M)*60000 = 0.96s
+  48          */
+  49          void PWM11Init(uint8 clkdiv,uint16 idle0,uint16 idle1)
+  50          {
+  51   1          MDLCKCR_PWMEN = 1 << 6;
+  52   1          PWM1CR =  (1 << 4) | ((clkdiv & 0x07) << 0);    //³õÊ¼µçÆ½ÎªµÍµçÆ½¡¢·ÖÆµÏµÊý
+  53   1          PWM1LRL = ( idle0 & 0x00ff) ;            //ÅäÖÃÕ¼¿Õ±È
+  54   1          PWM1LRH = ((idle0 & 0xff00) >> 8) ; 
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 2   
+
+  55   1          PWM1HRL = ( idle1 & 0x00ff) ;
+  56   1          PWM1HRH = ((idle1 & 0xff00) >> 8) ; 
+  57   1          PWM1CR_PWM1EN = 1 << 5;               //Ê¹ÄÜPWM1
+  58   1      
+  59   1      }
+  60          
+  61          
+  62          /******************************pwm1(16Î»)Ïà¹Øº¯Êý**********************************/
+  63          /*********************************************************************************** 
+  64          Function   : void pwm1Init(uint8 div,uint16 pwml,uint16 pwmh) 
+  65          Description: PWM1Ä£¿é³õÊ¼»¯£¬¼ÆÊýÊ±ÖÓ·ÖÆµÉèÖÃ£¬Âö¿íµ÷ÖÆ(Ä¬ÈÏÊä³ö³õÊ¼µçÆ½Îª0)
+  66          Input      : div: ¼ÆÊýÊ±ÖÓ·ÖÆµÊý(Ê±ÖÓÔ´ÊÇSCLKÏµÍ³Ê±ÖÓ) 
+  67                  0 - 2·ÖÆµ¡¢1 - 4·ÖÆµ¡¢2 - 8·ÖÆµ¡¢3 - 16·ÖÆµ¡¢
+  68                  4 - 32·ÖÆµ¡¢5 - 64·ÖÆµ¡¢6 - 128·ÖÆµ¡¢7 - 256·ÖÆµ¡£
+  69                 pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+  70                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+  71          Output     : No                   
+  72          Return     : No
+  73          ************************************************************************************/
+  74          void pwm1Init(uint8 div,uint16 pwml,uint16 pwmh) 
+  75          {
+  76   1        MDLCKCR_PWMEN = 1 << 6 ;//Ê¹ÄÜPWMÄ£¿éµÄÊ±ÖÓ
+  77   1        PWM1CR = (1 << 4) | (div & 0x07);//bit4£º0-PWM1³õÊ¼µÍµçÆ½£¬1-PWM1³õÊ¼¸ßµçÆ½£»divÅäÖÃ¼ÆÊýÊ±ÖÓ·ÖÆµÊý
+  78   1        PWM1LRL = pwml & 0x00ff ;//ÅäÖÃPWM1L,PWM1H,µ÷ÖÆÂö¿í
+  79   1        PWM1LRH = (pwml & 0xff00) >> 8;
+  80   1        PWM1HRL = pwmh & 0x00ff;
+  81   1        PWM1HRH = (pwmh & 0xff00) >> 8;
+  82   1        
+  83   1      }
+  84          
+  85          /*********************************************************************************** 
+  86          Function   : void pwm1Set(uint16 pwml,uint16 pwmh) 
+  87          Description: PWM1Âö¿íµ÷ÖÆ
+  88          Input      : pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+  89                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+  90          Output     : No                   
+  91          Return     : No
+  92          ************************************************************************************/
+  93          void pwm1Set(uint16 pwml,uint16 pwmh) 
+  94          {
+  95   1        PWM1LRL = pwml & 0x00ff ;//ÅäÖÃPWM1L,PWM1H,µ÷ÖÆÂö
+  96   1        PWM1LRH = (pwml & 0xff00) >> 8;
+  97   1        PWM1HRL = pwmh & 0x00ff;
+  98   1        PWM1HRH = (pwmh & 0xff00) >> 8;
+  99   1      }
+ 100          
+ 101          /*********************************************************************************** 
+ 102          Function   : void pwm1Dis(void) 
+ 103          Description: ¹Ø±ÕPWM1Êä³ö
+ 104          Input      : No 
+ 105          Output     : No                   
+ 106          Return     : No
+ 107          ************************************************************************************/
+ 108          void pwm1Dis(void) 
+ 109          {
+ 110   1        PWM1CR_PWM1EN = 0 << 5 ;//PWM1_EN=0,¹Ø±ÕPWM1Êä³ö
+ 111   1      }
+ 112          
+ 113          /*********************************************************************************** 
+ 114          Function   : void pwm1En(void) 
+ 115          Description: Ê¹ÄÜPWM1Êä³ö
+ 116          Input      : No 
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 3   
+
+ 117          Output     : No                   
+ 118          Return     : No
+ 119          ************************************************************************************/
+ 120          void pwm1En(void) 
+ 121          {               
+ 122   1        PWM1CR_PWM1EN = 1 << 5 ;//PWM1_EN=1,Ê¹ÄÜPWM1Êä³ö
+ 123   1      }
+ 124          
+ 125          /*********************************************************************************** 
+ 126          Function   : void pwm1DTSet(uint8 pwm1DTen,uint8 pwm1invDTen,uint8 DTdiv,uint8 pwm1DTcnt,uint16 pwm1invDTc
+             -nt) 
+ 127          Description: PWM1ËÀÇøÅäÖÃ
+ 128          Input      : pwm1DTen: pwm1Êä³öÍ¨µÀµÄËÀÇøÊ±¼ä¿ØÖÆÊ¹ÄÜÎ»£¨1ÓÐÐ§£©;
+ 129                       pwm1invDTen£ºpwm1Êä³ö»¥²¹Í¨µÀµÄËÀÇøÊ±¼ä¿ØÖÆÊ¹ÄÜÎ»£¨1ÓÐÐ§£©;
+ 130                       DTdiv£ºpwm135Í¨µÀµÄËÀÇøÊ±¼äµÄÊ±ÖÓ·ÖÆµÏµÊý(Ê±ÖÓÔ´ÎªSCLKÏµÍ³Ê±ÖÓ) 
+ 131                       pwm1DTcnt£ºpwm1Êä³öÍ¨µÀµÄËÀÇøÊ±¼äµÄÊ±ÖÓ¸öÊý  ËÀÇøÊ±¼ä = pwm1DTcnt*·ÖÆµºóËÀÇøÊ±ÖÓ = pwm1DTcnt* DTdiv
+             -^2 / SCLK
+ 132          Output     : No                   
+ 133          Return     : No
+ 134          ************************************************************************************/
+ 135          void pwm1DTSet(uint8 pwm1DTen,uint8 pwm1invDTen,uint8 DTdiv,uint8 pwm1DTcnt,uint16 pwm1invDTcnt) 
+ 136          {
+ 137   1        PWM135DTCTRL&=0x3c;//Çå0
+ 138   1        PWM135OUTCR&=0xfc;//PMW1Êä³öPWM1
+ 139   1        PWM135INVOUTCR&=0xfc;//PMW1_INVÊä³öPWM1_INV
+ 140   1        PWM1DTCR=pwm1DTcnt;
+ 141   1        PWM1INVDTCR=pwm1invDTcnt;
+ 142   1        PWM135DTCTRL|=(DTdiv<<6)| (pwm1DTen&0x01) | ((pwm1invDTen<<1)&0x02);
+ 143   1      }
+ 144          
+ 145          /*******************************pwm2(8Î»)Ïà¹Øº¯Êý**********************************/
+ 146          /*********************************************************************************** 
+ 147          Function   : void pwm2Init(uint8 div,uint8 pwml,uint8 pwmh)
+ 148          Description: PWM2Ä£¿é³õÊ¼»¯£¬¼ÆÊýÊ±ÖÓ·ÖÆµÉèÖÃ£¬Âö¿íµ÷ÖÆ(Ä¬ÈÏÊä³ö³õÊ¼µçÆ½Îª0)
+ 149          Input      : div: ¼ÆÊýÊ±ÖÓ·ÖÆµÊý(Ê±ÖÓÔ´ÊÇSCLKÏµÍ³Ê±ÖÓ) 
+ 150                  0 - 2·ÖÆµ¡¢1 - 4·ÖÆµ¡¢2 - 8·ÖÆµ¡¢3 - 16·ÖÆµ¡¢4 - 32·ÖÆµ¡¢ 
+ 151                    5 - 64·ÖÆµ¡¢6 - 128·ÖÆµ¡¢7 - 256·ÖÆµ¡¢8 - 512·ÖÆµ¡¢9 - 1024·ÖÆµ¡¢10 - 2048·ÖÆµ¡¢
+ 152                    11 - 4096·ÖÆµ¡¢12 - 8192·ÖÆµ¡¢13 - 16384·ÖÆµ¡¢14 - 32768·ÖÆµ¡¢15 - 65536·ÖÆµ
+ 153                 pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+ 154                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 155          Output     : No                   
+ 156          Return     : No
+ 157          ************************************************************************************/
+ 158          void pwm2Init(uint8 div,uint8 pwml,uint8 pwmh) 
+ 159          {
+ 160   1        MDLCKCR_PWMEN = 1 << 6 ;//Ê¹ÄÜPWMÄ£¿éµÄÊ±ÖÓ
+ 161   1        PWM2CR = (1 << 4) | ((div & 0x0f) << 0) ;//bit4£º0-PWM2³õÊ¼µÍµçÆ½£¬1-PWM2³õÊ¼¸ßµçÆ½£»divÅäÖÃ¼ÆÊýÊ±ÖÓ·ÖÆµÊ
+             -ý
+ 162   1        PWM2LR = pwml ;//ÅäÖÃPWM2LR,PWM2HR,µ÷ÖÆÂö¿í
+ 163   1        PWM2HR = pwmh ; 
+ 164   1      }
+ 165          
+ 166          /*********************************************************************************** 
+ 167          Function   : void pwm2Set(uint8 pwml,uint8 pwmh) 
+ 168          Description: PWM2Âö¿íµ÷ÖÆ
+ 169          Input      : pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+ 170                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 171          Output     : No                   
+ 172          Return     : No
+ 173          ************************************************************************************/                  
+ 174          void pwm2Set(uint8 pwml,uint8 pwmh) 
+ 175          {
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 4   
+
+ 176   1        PWM2LR = pwml ;//ÅäÖÃPWM2LR,PWM2HR,µ÷ÖÆÂö¿í
+ 177   1        PWM2HR = pwmh ;          
+ 178   1      }
+ 179          
+ 180          /*********************************************************************************** 
+ 181          Function   : void pwm2Dis(void) 
+ 182          Description: ¹Ø±ÕPWM2Êä³ö
+ 183          Input      : No 
+ 184          Output     : No                   
+ 185          Return     : No
+ 186          ************************************************************************************/
+ 187          void pwm2Dis(void) 
+ 188          {
+ 189   1        PWM2CR_PWM2EN = 0 << 5 ;//PWM2CR_PWM2EN=0,¹Ø±ÕPWM2Êä³ö
+ 190   1      }
+ 191          
+ 192          /*********************************************************************************** 
+ 193          Function   : void pwm2En(void) 
+ 194          Description: Ê¹ÄÜPWM2Êä³ö
+ 195          Input      : No 
+ 196          Output     : No                   
+ 197          Return     : No
+ 198          ************************************************************************************/
+ 199          void pwm2En(void) 
+ 200          {
+ 201   1        PWM2CR_PWM2EN = 1 << 5 ;//PWM2CR_PWM2EN=1,Ê¹ÄÜPWM2Êä³ö
+ 202   1      }
+ 203          
+ 204          /******************************pwm3(16Î»)Ïà¹Øº¯Êý**********************************/
+ 205          /*********************************************************************************** 
+ 206          Function   : void pwm3Init(uint8 div,uint16 pwml,uint16 pwmh) 
+ 207          Description: PWM3Ä£¿é³õÊ¼»¯£¬¼ÆÊýÊ±ÖÓ·ÖÆµÉèÖÃ£¬Âö¿íµ÷ÖÆ(Ä¬ÈÏÊä³ö³õÊ¼µçÆ½Îª0)
+ 208          Input      : div: ¼ÆÊýÊ±ÖÓ·ÖÆµÊý(Ê±ÖÓÔ´ÊÇSCLKÏµÍ³Ê±ÖÓ) 
+ 209                  0 - 2·ÖÆµ¡¢1 - 4·ÖÆµ¡¢2 - 8·ÖÆµ¡¢3 - 16·ÖÆµ¡¢
+ 210                  4 - 32·ÖÆµ¡¢5 - 64·ÖÆµ¡¢6 - 128·ÖÆµ¡¢7 - 256·ÖÆµ¡£
+ 211                 pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+ 212                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 213          Output     : No                   
+ 214          Return     : No
+ 215          ************************************************************************************/
+ 216          void pwm3Init(uint8 div,uint16 pwml,uint16 pwmh) 
+ 217          {
+ 218   1        MDLCKCR_PWMEN = 1 << 6 ;//Ê¹ÄÜPWMÄ£¿éµÄÊ±ÖÓ
+ 219   1        PWM3CR = (1 << 4) | (div & 0x07);//bit4£º0-PWM3³õÊ¼µÍµçÆ½£¬1-PWM3³õÊ¼¸ßµçÆ½£»divÅäÖÃ¼ÆÊýÊ±ÖÓ·ÖÆµÊý
+ 220   1        PWM3LRL = pwml & 0x00ff ;//ÅäÖÃPWM3L,PWM3H,µ÷ÖÆÂö¿í
+ 221   1        PWM3LRH = (pwml & 0xff00) >> 8;
+ 222   1        PWM3HRL = pwmh & 0x00ff;
+ 223   1        PWM3HRH = (pwmh & 0xff00) >> 8;
+ 224   1      }
+ 225          
+ 226          /*********************************************************************************** 
+ 227          Function   : void pwm3Set(uint16 pwml,uint16 pwmh) 
+ 228          Description: PWM3Âö¿íµ÷ÖÆ
+ 229          Input      : pwm3: µÍµçÆ½Ê±¼ä=pwm3*Tpwm
+ 230                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 231          Output     : No                   
+ 232          Return     : No
+ 233          ************************************************************************************/
+ 234          void pwm3Set(uint16 pwml,uint16 pwmh) 
+ 235          {
+ 236   1        PWM3LRL = pwml & 0x00ff ;//ÅäÖÃPWM3L,PWM3H,µ÷ÖÆÂö
+ 237   1        PWM3LRH = (pwml & 0xff00) >> 8;
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 5   
+
+ 238   1        PWM3HRL = pwmh & 0x00ff;
+ 239   1        PWM3HRH = (pwmh & 0xff00) >> 8;
+ 240   1      }
+ 241          
+ 242          /*********************************************************************************** 
+ 243          Function   : void pwm3Dis(void) 
+ 244          Description: ¹Ø±ÕPWM3Êä³ö
+ 245          Input      : No 
+ 246          Output     : No                   
+ 247          Return     : No
+ 248          ************************************************************************************/
+ 249          void pwm3Dis(void) 
+ 250          {
+ 251   1        PWM3CR&= ~(1 << 5) ;//PWM3_EN=0,¹Ø±ÕPWM3Êä³ö
+ 252   1      }
+ 253          
+ 254          /*********************************************************************************** 
+ 255          Function   : void pwm3En(void) 
+ 256          Description: Ê¹ÄÜPWM3Êä³ö
+ 257          Input      : No 
+ 258          Output     : No                   
+ 259          Return     : No
+ 260          ************************************************************************************/
+ 261          void pwm3En(void) 
+ 262          {               
+ 263   1        PWM3CR|= 1 << 5 ;//PWM3_EN=1,Ê¹ÄÜPWM3Êä³ö
+ 264   1      }
+ 265          
+ 266          /*********************************************************************************** 
+ 267          Function   : void pwm3DTSet(uint8 pwm3DTen,uint8 pwm3invDTen,uint8 DTdiv,uint8 pwm3DTcnt,uint16 pwm3invDTc
+             -nt) 
+ 268          Description: PWM3ËÀÇøÅäÖÃ
+ 269          Input      : pwm3DTen: pwm3Êä³öÍ¨µÀµÄËÀÇøÊ±¼ä¿ØÖÆÊ¹ÄÜÎ»£¨1ÓÐÐ§£©;
+ 270                       pwm3invDTen£ºpwm3Êä³ö»¥²¹Í¨µÀµÄËÀÇøÊ±¼ä¿ØÖÆÊ¹ÄÜÎ»£¨1ÓÐÐ§£©;
+ 271                       DTdiv£ºpwm135Í¨µÀµÄËÀÇøÊ±¼äµÄÊ±ÖÓ·ÖÆµÏµÊý(Ê±ÖÓÔ´ÎªSCLKÏµÍ³Ê±ÖÓ) 
+ 272                       pwm3DTcnt£ºpwm3Êä³öÍ¨µÀµÄËÀÇøÊ±¼äµÄÊ±ÖÓ¸öÊý  ËÀÇøÊ±¼ä = pwm3DTcnt*·ÖÆµºóËÀÇøÊ±ÖÓ = pwm3DTcnt* DTdiv
+             -^2 / SCLK
+ 273          Output     : No                   
+ 274          Return     : No
+ 275          ************************************************************************************/
+ 276          void pwm3DTSet(uint8 pwm3DTen,uint8 pwm3invDTen,uint8 DTdiv,uint8 pwm3DTcnt,uint16 pwm3invDTcnt) 
+ 277          {
+ 278   1        PWM135DTCTRL&=0x33;//Çå0 
+ 279   1        PWM135OUTCR&=0xf3;//PMW3Êä³öPWM3
+ 280   1        PWM135INVOUTCR&=0xf3;//PMW3_INVÊä³öPWM3_INV
+ 281   1        PWM3DTCR=pwm3DTcnt;
+ 282   1        PWM3INVDTCR=pwm3invDTcnt;
+ 283   1        PWM135DTCTRL|=(DTdiv<<6)| ((pwm3DTen<<2)&0x04) | ((pwm3invDTen<<3)&0x08);
+ 284   1      }
+ 285          
+ 286          
+ 287          /*******************************pwm4(8Î»)Ïà¹Øº¯Êý**********************************/
+ 288          /*********************************************************************************** 
+ 289          Function   : void pwm4Init(uint8 div,uint8 pwml,uint8 pwmh)
+ 290          Description: PWM4Ä£¿é³õÊ¼»¯£¬¼ÆÊýÊ±ÖÓ·ÖÆµÉèÖÃ£¬Âö¿íµ÷ÖÆ(Ä¬ÈÏÊä³ö³õÊ¼µçÆ½Îª0)
+ 291          Input      : div: ¼ÆÊýÊ±ÖÓ·ÖÆµÊý(Ê±ÖÓÔ´ÊÇSCLKÏµÍ³Ê±ÖÓ) 
+ 292                  0 - 2·ÖÆµ¡¢1 - 4·ÖÆµ¡¢2 - 8·ÖÆµ¡¢3 - 16·ÖÆµ¡¢4 - 32·ÖÆµ¡¢ 
+ 293                    5 - 64·ÖÆµ¡¢6 - 128·ÖÆµ¡¢7 - 256·ÖÆµ¡¢8 - 512·ÖÆµ¡¢9 - 1024·ÖÆµ¡¢10 - 2048·ÖÆµ¡¢
+ 294                    11 - 4096·ÖÆµ¡¢12 - 8192·ÖÆµ¡¢13 - 16384·ÖÆµ¡¢14 - 32768·ÖÆµ¡¢15 - 65536·ÖÆµ
+ 295                 pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+ 296                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 297          Output     : No                   
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 6   
+
+ 298          Return     : No
+ 299          ************************************************************************************/
+ 300          void pwm4Init(uint8 div,uint8 pwml,uint8 pwmh) 
+ 301          {
+ 302   1        MDLCKCR_PWMEN = 1 << 6 ;//Ê¹ÄÜPWMÄ£¿éµÄÊ±ÖÓ
+ 303   1        PWM4CR = (1 << 4) | ((div & 0x0f) << 0) ;//bit4£º0-PWM4³õÊ¼µÍµçÆ½£¬1-PWM4³õÊ¼¸ßµçÆ½£»divÅäÖÃ¼ÆÊýÊ±ÖÓ·ÖÆµÊ
+             -ý
+ 304   1        PWM4LR = pwml ;//ÅäÖÃPWM4LR,PWM4HR,µ÷ÖÆÂö¿í
+ 305   1        PWM4HR = pwmh ; 
+ 306   1      }
+ 307          
+ 308          /*********************************************************************************** 
+ 309          Function   : void pwm4Set(uint8 pwml,uint8 pwmh) 
+ 310          Description: PWM4Âö¿íµ÷ÖÆ
+ 311          Input      : pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+ 312                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 313          Output     : No                   
+ 314          Return     : No
+ 315          ************************************************************************************/                  
+ 316          void pwm4Set(uint8 pwml,uint8 pwmh) 
+ 317          {
+ 318   1        PWM4LR = pwml ;//ÅäÖÃPWM4LR,PWM4HR,µ÷ÖÆÂö¿í
+ 319   1        PWM4HR = pwmh ; 
+ 320   1      }
+ 321          
+ 322          /*********************************************************************************** 
+ 323          Function   : void pwm4Dis(void) 
+ 324          Description: ¹Ø±ÕPWM4Êä³ö
+ 325          Input      : No 
+ 326          Output     : No                   
+ 327          Return     : No
+ 328          ************************************************************************************/
+ 329          void pwm4Dis(void) 
+ 330          {
+ 331   1        PWM4CR &= ~(1 << 5) ;//PWM4CR_PWM4EN=0,¹Ø±ÕPWM4Êä³ö
+ 332   1      }
+ 333          
+ 334          /*********************************************************************************** 
+ 335          Function   : void pwm4En(void) 
+ 336          Description: Ê¹ÄÜPWM4Êä³ö
+ 337          Input      : No 
+ 338          Output     : No                   
+ 339          Return     : No
+ 340          ************************************************************************************/
+ 341          void pwm4En(void) 
+ 342          {
+ 343   1        PWM4CR |= 1 << 5 ;//PWM4CR_PWM4EN=1,Ê¹ÄÜPWM4Êä³ö
+ 344   1      }
+ 345          
+ 346          /*******************************pwm5(8Î»)Ïà¹Øº¯Êý**********************************/
+ 347          /*********************************************************************************** 
+ 348          Function   : void pwm5Init(uint8 div,uint16 pwml,uint16 pwmh) 
+ 349          Description: PWM3Ä£¿é³õÊ¼»¯£¬¼ÆÊýÊ±ÖÓ·ÖÆµÉèÖÃ£¬Âö¿íµ÷ÖÆ(Ä¬ÈÏÊä³ö³õÊ¼µçÆ½Îª0)
+ 350          Input      : div: ¼ÆÊýÊ±ÖÓ·ÖÆµÊý(Ê±ÖÓÔ´ÊÇSCLKÏµÍ³Ê±ÖÓ) 
+ 351                  0 - 2·ÖÆµ¡¢1 - 4·ÖÆµ¡¢2 - 8·ÖÆµ¡¢3 - 16·ÖÆµ¡¢
+ 352                  4 - 32·ÖÆµ¡¢5 - 64·ÖÆµ¡¢6 - 128·ÖÆµ¡¢7 - 256·ÖÆµ¡£
+ 353                 pwml: µÍµçÆ½Ê±¼ä=pwml*Tpwm
+ 354                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 355          Output     : No                   
+ 356          Return     : No
+ 357          ************************************************************************************/
+ 358          void pwm5Init(uint8 div,uint16 pwml,uint16 pwmh) 
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 7   
+
+ 359          {
+ 360   1        MDLCKCR_PWMEN = 1 << 6 ;//Ê¹ÄÜPWMÄ£¿éµÄÊ±ÖÓ
+ 361   1        PWM5CR = (1 << 4) | (div & 0x07);//bit4£º0-PWM5³õÊ¼µÍµçÆ½£¬1-PWM5³õÊ¼¸ßµçÆ½£»divÅäÖÃ¼ÆÊýÊ±ÖÓ·ÖÆµÊý
+ 362   1        PWM5LRL = pwml & 0x00ff ;//ÅäÖÃPWM5L,PWM5H,µ÷ÖÆÂö¿í
+ 363   1        PWM5LRH = (pwml & 0xff00) >> 8;
+ 364   1        PWM5HRL = pwmh & 0x00ff;
+ 365   1        PWM5HRH = (pwmh & 0xff00) >> 8;
+ 366   1      }
+ 367          
+ 368          /*********************************************************************************** 
+ 369          Function   : void pwm5Set(uint16 pwml,uint16 pwmh) 
+ 370          Description: PWM5Âö¿íµ÷ÖÆ
+ 371          Input      : pwm5: µÍµçÆ½Ê±¼ä=pwm5*Tpwm
+ 372                 pwmh: ¸ßµçÆ½Ê±¼ä=pwmh*Tpwm  
+ 373          Output     : No                   
+ 374          Return     : No
+ 375          ************************************************************************************/
+ 376          void pwm5Set(uint16 pwml,uint16 pwmh) 
+ 377          {
+ 378   1        PWM5LRL = pwml & 0x00ff ;//ÅäÖÃPWM5L,PWM5H,µ÷ÖÆÂö
+ 379   1        PWM5LRH = (pwml & 0xff00) >> 8;
+ 380   1        PWM5HRL = pwmh & 0x00ff;
+ 381   1        PWM5HRH = (pwmh & 0xff00) >> 8;
+ 382   1      }
+ 383          
+ 384          /*********************************************************************************** 
+ 385          Function   : void pwm5Dis(void) 
+ 386          Description: ¹Ø±ÕPWM5Êä³ö
+ 387          Input      : No 
+ 388          Output     : No                   
+ 389          Return     : No
+ 390          ************************************************************************************/
+ 391          void pwm5Dis(void) 
+ 392          {
+ 393   1        PWM5CR&= ~(1 << 5) ;//PWM5_EN=0,¹Ø±ÕPWM5Êä³ö
+ 394   1      }
+ 395          
+ 396          /*********************************************************************************** 
+ 397          Function   : void pwm5En(void) 
+ 398          Description: Ê¹ÄÜPWM5Êä³ö
+ 399          Input      : No 
+ 400          Output     : No                   
+ 401          Return     : No
+ 402          ************************************************************************************/
+ 403          void pwm5En(void) 
+ 404          {               
+ 405   1        PWM5CR|= 1 << 5 ;//PWM5_EN=1,Ê¹ÄÜPWM5Êä³ö
+ 406   1      }
+ 407          
+ 408          /*********************************************************************************** 
+ 409          Function   : void pwm5DTSet(uint8 pwm5DTen,uint8 pwm5invDTen,uint8 DTdiv,uint8 pwm5DTcnt,uint16 pwm5invDTc
+             -nt) 
+ 410          Description: PWM5ËÀÇøÅäÖÃ
+ 411          Input      : pwm5DTen: pwm5Êä³öÍ¨µÀµÄËÀÇøÊ±¼ä¿ØÖÆÊ¹ÄÜÎ»£¨1ÓÐÐ§£©;
+ 412                       pwm5invDTen£ºpwm5Êä³ö»¥²¹Í¨µÀµÄËÀÇøÊ±¼ä¿ØÖÆÊ¹ÄÜÎ»£¨1ÓÐÐ§£©;
+ 413                       DTdiv£ºpwm135Í¨µÀµÄËÀÇøÊ±¼äµÄÊ±ÖÓ·ÖÆµÏµÊý(Ê±ÖÓÔ´ÎªSCLKÏµÍ³Ê±ÖÓ) 
+ 414                       pwm5DTcnt£ºpwm5Êä³öÍ¨µÀµÄËÀÇøÊ±¼äµÄÊ±ÖÓ¸öÊý  ËÀÇøÊ±¼ä = pwm5DTcnt*·ÖÆµºóËÀÇøÊ±ÖÓ = pwm5DTcnt* DTdiv
+             -^2 / SCLK
+ 415          Output     : No                   
+ 416          Return     : No
+ 417          ************************************************************************************/
+ 418          void pwm5DTSet(uint8 pwm5DTen,uint8 pwm5invDTen,uint8 DTdiv,uint8 pwm5DTcnt,uint16 pwm5invDTcnt) 
+C51 COMPILER V9.52.0.0   PWM                                                               11/12/2024 10:59:50 PAGE 8   
+
+ 419          {
+ 420   1        PWM135DTCTRL&=0x0f;//Çå0 
+ 421   1        PWM135OUTCR&=0xcf;//PMW5Êä³öPWM5
+ 422   1        PWM135INVOUTCR&=0xcf;//PMW5_INVÊä³öPWM5_INV
+ 423   1        PWM5DTCR=pwm5DTcnt;
+ 424   1        PWM5INVDTCR=pwm5invDTcnt;
+ 425   1        PWM135DTCTRL|=(DTdiv<<6)| ((pwm5DTen<<4)&0x10) | ((pwm5invDTen<<5)&0x20);
+ 426   1      }
+ 427          
+ 428          
+ 429          /*********************************************************************************** 
+ 430          Function   : void pwm135outControl(uint8 pwm_en) 
+ 431          Description: PWM135Í¨µÀÍ¬²½Êä³ö¿ØÖÆ
+ 432          Input      : pwm_en£ºPWM1¡¢PWM1_inv¡¢PWM3¡¢PWM3_inv¡¢PWM5¡¢PWM5_invÊä³öÍ¬²½Ê¹ÄÜÎ»
+ 433                               0£ºÍ¬Ê±¹Ø±Õ6Í¨µÀÊä³ö   1£ºÍ¬Ê±Ê¹ÄÜ6Í¨µÀÊä³ö
+ 434          Output     : No                   
+ 435          Return     : No
+ 436          ************************************************************************************/
+ 437          void pwm135outControl(uint8 pwm_en) 
+ 438          {
+ 439   1        PWMSYNC=(pwm_en&0x01);
+ 440   1      }
+ 441          
+ 442          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    545    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      18
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,11 @@
+".\obj\START_CB72.obj",
+".\obj\main.obj",
+".\obj\sysinit.obj",
+".\obj\EXT.obj",
+".\obj\isr.obj",
+".\obj\timer1.obj",
+".\obj\uart1.obj",
+".\obj\wdt.obj" 
+TO ".\obj\LED" 
+
+PRINT(".\lst\LED.map")

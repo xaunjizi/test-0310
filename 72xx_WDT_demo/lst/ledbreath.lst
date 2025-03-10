@@ -1,0 +1,136 @@
+C51 COMPILER V9.52.0.0   LEDBREATH                                                         11/12/2024 10:51:45 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE LEDBREATH
+OBJECT MODULE PLACED IN .\obj\ledbreath.obj
+COMPILER INVOKED BY: D:\keil\C51\BIN\C51.EXE src\ledbreath.c LARGE OMF2 BROWSE INCDIR(.\src) DEBUG PRINT(.\lst\ledbreath
+                    -.lst) TABS(2) OBJECT(.\obj\ledbreath.obj)
+
+line level    source
+
+   1          #include "CBM7216.h"
+   2          #include "math.h"
+   3          #include "pwm.h"
+   4          #include "ledbreath.h"
+   5          
+   6          #define PI  (3.1415926/BREATH_DUTY)
+   7          #define BREATH_DUTYSTEP ((BREATH_DUTY)/(BREATH_STEPLEVEL))//Ã¿Ò»¼¶Õ¼¿Õ±ÈSTEPµÄ³¤¶È
+   8          /*--------------------------global variable definition-----------------------------*/
+   9          uint16 g_breathDutyCnt1 = 0,g_breathDutyCnt2 = 50,g_breathDutyCnt3 = 100,g_breathDutyCnt4 = 150,g_breathDu
+             -tyCnt5 = 200;//¼ÆÊýÆ÷
+  10          uint16 g_breathDutyH1 = 0,g_breathDutyH2 = 0,g_breathDutyH3 = 0,g_breathDutyH4 = 0,g_breathDutyH5 = 0;//g_
+             -breathDutyHÎªÓÐÐ§µçÆ½¿í¶È£¬¼´µãÁÁLEDµÆµÄµçÆ½¿í¶È
+  11          
+  12          /*********************************************************************************** 
+  13          Function   : void breath1(void)
+  14          Description: ¸üÐÂpwm1Õ¼¿Õ±È£¬ÒÔBREATH_REFRESH1µÄË¢ÐÂ¼ä¸ôÊ±¼äÀ´µ÷ÓÃ             
+  15          Input      : No      
+  16          Output     : No                   
+  17          Return     : No
+  18          ************************************************************************************/
+  19          void breath1(void)
+  20          {
+  21   1        g_breathDutyCnt1 += BREATH_DUTYSTEP ;
+  22   1        if(g_breathDutyCnt1 > BREATH_DUTY)
+  23   1        {
+  24   2          g_breathDutyCnt1 = 0 ;
+  25   2        }
+  26   1        g_breathDutyH1 = BREATH_DUTY*sin(g_breathDutyCnt1*PI) ;
+  27   1        pwm1Set(BREATH_DUTY-g_breathDutyH1,g_breathDutyH1) ;
+  28   1      }
+  29          
+  30          /*********************************************************************************** 
+  31          Function   : void breath2(void)
+  32          Description: ¸üÐÂpwm2Õ¼¿Õ±È£¬ÒÔBREATH_REFRESH2µÄË¢ÐÂ¼ä¸ôÊ±¼äÀ´µ÷ÓÃ             
+  33          Input      : No      
+  34          Output     : No                   
+  35          Return     : No
+  36          ************************************************************************************/
+  37          void breath2(void)
+  38          {
+  39   1        g_breathDutyCnt2 += BREATH_DUTYSTEP ;
+  40   1        if(g_breathDutyCnt2 > BREATH_DUTY)
+  41   1        {
+  42   2          g_breathDutyCnt2 = 0 ;
+  43   2        }
+  44   1        g_breathDutyH2 = BREATH_DUTY*sin(g_breathDutyCnt2*PI) ;
+  45   1        pwm2Set(BREATH_DUTY-g_breathDutyH2,g_breathDutyH2) ;//×¢ÒâPWM2µÄÕ¼¿Õ±ÈÊÇ8Î»µÄ£»g_breathDutyHÎªÓÐÐ§µçÆ½¿í¶
+             -È£¬¼´µãÁÁLEDµÆµÄµçÆ½¿í¶È
+  46   1      }
+  47          
+  48          /*********************************************************************************** 
+  49          Function   : void breath3(void)
+  50          Description: ¸üÐÂpwm3Õ¼¿Õ±È£¬ÒÔBREATH_REFRESH3µÄË¢ÐÂ¼ä¸ôÊ±¼äÀ´µ÷ÓÃ             
+  51          Input      : No      
+C51 COMPILER V9.52.0.0   LEDBREATH                                                         11/12/2024 10:51:45 PAGE 2   
+
+  52          Output     : No                   
+  53          Return     : No
+  54          ************************************************************************************/
+  55          void breath3(void)
+  56          {
+  57   1        g_breathDutyCnt3 += BREATH_DUTYSTEP ;
+  58   1        if(g_breathDutyCnt3 > BREATH_DUTY)
+  59   1        {
+  60   2          g_breathDutyCnt3 = 0 ;
+  61   2        }
+  62   1        g_breathDutyH3 = BREATH_DUTY*sin(g_breathDutyCnt3*PI) ;
+  63   1        pwm3Set(BREATH_DUTY-g_breathDutyH3,g_breathDutyH3) ;
+  64   1      }
+  65          
+  66          /*********************************************************************************** 
+  67          Function   : void breath4(void)
+  68          Description: ¸üÐÂpwm4Õ¼¿Õ±È£¬ÒÔBREATH_REFRESH4µÄË¢ÐÂ¼ä¸ôÊ±¼äÀ´µ÷ÓÃ             
+  69          Input      : No      
+  70          Output     : No                   
+  71          Return     : No
+  72          ************************************************************************************/
+  73          void breath4(void)
+  74          {
+  75   1        g_breathDutyCnt4 += BREATH_DUTYSTEP ;
+  76   1        if(g_breathDutyCnt4 > BREATH_DUTY)
+  77   1        {
+  78   2          g_breathDutyCnt4 = 0 ;
+  79   2        }
+  80   1        g_breathDutyH4 = BREATH_DUTY*sin(g_breathDutyCnt4*PI) ;
+  81   1        pwm4Set(BREATH_DUTY-g_breathDutyH4,g_breathDutyH4) ;//×¢ÒâPWM4µÄÕ¼¿Õ±ÈÊÇ8Î»µÄ£»g_breathDutyHÎªÓÐÐ§µçÆ½¿í¶
+             -È£¬¼´µãÁÁLEDµÆµÄµçÆ½¿í¶È
+  82   1      }
+  83          
+  84          /*********************************************************************************** 
+  85          Function   : void breath5(void)
+  86          Description: ¸üÐÂpwm5Õ¼¿Õ±È£¬ÒÔBREATH_REFRESH5µÄË¢ÐÂ¼ä¸ôÊ±¼äÀ´µ÷ÓÃ             
+  87          Input      : No      
+  88          Output     : No                   
+  89          Return     : No
+  90          ************************************************************************************/
+  91          void breath5(void)
+  92          {
+  93   1        g_breathDutyCnt5 += BREATH_DUTYSTEP ;
+  94   1        if(g_breathDutyCnt5 > BREATH_DUTY)
+  95   1        {
+  96   2          g_breathDutyCnt5 = 0 ;
+  97   2        }
+  98   1        g_breathDutyH5 = BREATH_DUTY*sin(g_breathDutyCnt5*PI) ;
+  99   1        pwm5Set(BREATH_DUTY-g_breathDutyH5,g_breathDutyH5) ;
+ 100   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    525    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     20    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+C51 COMPILER V9.52.0.0   LEDBREATH                                                         11/12/2024 10:51:45 PAGE 3   
+
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
